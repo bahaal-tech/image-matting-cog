@@ -3,13 +3,15 @@
 
 import cv2
 import numpy as np
+from typing import Optional
 from pymatting import cutout
-from cog import BasePredictor, BaseModel, Input, Path
+from pydantic import BaseModel
+from cog import BasePredictor, Input, Path, File
 
-class MattingOutput(BaseModel):
-    segmentedImage: Path
+class Output(BaseModel):
     success: bool
-    error: str
+    error: Optional[str]
+    segmentedImage: Optional[Path]
 
 class Predictor(BasePredictor):
     def setup(self) -> None:
@@ -17,13 +19,13 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        image: Path = Input(description="Input image"),
-        mask: Path = Input(description="Mask image", default=None),
-        trimap: Path = Input(description="Trimap image", default=None),
-    ) -> MattingOutput:
+        image: File = Input(description="Input image"),
+        mask: File = Input(description="Mask image", default=None),
+        trimap: File = Input(description="Trimap image", default=None),
+    ) -> Output:
         # if there's no mask/trimap, return an error
         if mask is None and trimap is None:
-            return MattingOutput(segmentedImage=None, success=False, error="Must provide either mask or trimap")
+            return Output(segmentedImage=None, success=False, error="Must provide either mask or trimap")
         
         # if mask is present, create trimap using mask and then cut out the image
         if mask is not None:
@@ -55,4 +57,4 @@ class Predictor(BasePredictor):
             # cut the image using the trimap
             cutout(image, trimap, "output.png")
 
-        return MattingOutput(segmentedImage=Path("output.png"), success=True, error=None)
+        return Output(segmentedImage=Path("output.png"), success=True)
