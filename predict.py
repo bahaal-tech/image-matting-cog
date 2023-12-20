@@ -19,9 +19,9 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        image: File = Input(description="Input image"),
-        mask: File = Input(description="Mask image", default=None),
-        trimap: File = Input(description="Trimap image", default=None),
+        image: Path = Input(description="Input image"),
+        mask: Path = Input(description="Mask image", default=None),
+        trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
         # if there's no mask/trimap, return an error
         if mask is None and trimap is None:
