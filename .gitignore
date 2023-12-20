@@ -4,3 +4,4 @@ requirements.txt
 *.png
 __pycache__
 images
+*.log
