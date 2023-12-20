@@ -23,10 +23,6 @@ class Predictor(BasePredictor):
         mask: Path = Input(description="Mask image", default=None),
         trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
-        print("images is ", image)
-        print("mask is ", mask)
-        print("trimap is ", trimap)
-
         # if there's no mask/trimap, return an error
         if mask is None and trimap is None:
             return Output(segmentedImage=None, success=False, error="Must provide either mask or trimap")
