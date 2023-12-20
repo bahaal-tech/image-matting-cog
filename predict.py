@@ -31,7 +31,7 @@ class Predictor(BasePredictor):
         if mask is not None:
             kernel = np.ones((10, 10), np.uint8)
 
-            maskImage = cv2.imread(mask)
+            maskImage = cv2.cvtColor(cv2.imread(str(mask)), cv2.COLOR_BGR2GRAY)
             erodedImage = cv2.erode(maskImage, kernel, iterations=1)
             dilatedImage = cv2.dilate(maskImage, kernel, iterations=1)
 
@@ -47,10 +47,11 @@ class Predictor(BasePredictor):
                         newImage[i][j] = 255
                     elif dilationPixel > 0:
                         newImage[i][j] = 127
-            
-            cv2.imwrite("trimap.png", newImage)
 
             cutout(image, "trimap.png", "output.png")
+
+            output = cv2.imread("output.png")
+            cv2.imwrite("output.png", output)
         
         else:
             # if execution reaches here, trimap must be present, thus
