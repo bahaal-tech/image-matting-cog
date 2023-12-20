@@ -1,3 +1,6 @@
 env/*
 requirements.txt
 .cog
+*.png
+__pycache__
+images
