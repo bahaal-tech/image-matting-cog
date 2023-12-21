@@ -6,16 +6,21 @@ import numpy as np
 from typing import Optional
 from pymatting import cutout
 from pydantic import BaseModel
-from cog import BasePredictor, Input, Path, File
+from cog import BasePredictor, Input, Path
 
 class Output(BaseModel):
     success: bool
     error: Optional[str]
     segmentedImage: Optional[Path]
+    trimap: Optional[Path]
 
 class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
+        self.imagePath = "/tmp/image.jpg"
+        self.maskPath = "/tmp/mask.png"
+        self.trimapPath = "/tmp/trimap.png"
+        self.outputPath = "/tmp/output.png"
 
     def predict(
         self,
@@ -29,17 +34,23 @@ class Predictor(BasePredictor):
 
         # if mask is present, create trimap using mask and then cut out the image
         if mask is not None:
+
+            # read save image from inputs to disk
+            imageMat = cv2.imread(str(image))
+            cv2.imwrite(self.imagePath, imageMat)
             
+            # read mask from inputs
             maskMat = cv2.imread(str(mask))
 
-            kernel = np.ones((10, 10), np.uint8)
+            kernel = np.ones((30, 30), np.uint8)
 
+            # convert mask to greyscale, erode and dilate to create trimap
             maskImage = cv2.cvtColor(maskMat, cv2.COLOR_BGR2GRAY)
             erodedImage = cv2.erode(maskImage, kernel, iterations=1)
             dilatedImage = cv2.dilate(maskImage, kernel, iterations=1)
 
+            # base for the trimap
             newImage = np.zeros((erodedImage.shape[0], erodedImage.shape[1]), np.uint8)
-
 
             for i in range(0, erodedImage.shape[0]):
                 for j in range(0, erodedImage.shape[1]):
@@ -51,19 +62,25 @@ class Predictor(BasePredictor):
                     elif dilationPixel > 0:
                         newImage[i][j] = 127
             
-            cv2.imwrite("/tmp/trimap.png", newImage)
+            cv2.imwrite(self.trimapPath, newImage)
+            
+            # write trimap to disk for debugging
+            cv2.imwrite("trimap.png", newImage)
 
-            cutout(image, "/tmp/trimap.png", "output.png")
+            # cutout the image using pymatting
+            cutout(self.imagePath, self.trimapPath, self.outputPath)
 
-            output = cv2.imread("output.png")
+            output = cv2.imread(self.outputPath)
             cv2.imwrite("output.png", output)
         
         else:
-            # if execution reaches here, trimap must be present, thus
+            # if execution reaches here, trimap must be present, thus,
             # cut the image using the trimap
 
             trimap = cv2.imread(str(trimap))
+            cv2.imwrite(self.trimapPath, trimap)
 
-            cutout(image, trimap, "output.png")
+            # cutout the image using pymatting
+            cutout(self.imagePath, self.trimapPath, self.outputPath)
 
-        return Output(segmentedImage=Path("output.png"), success=True)
+        return Output(segmentedImage=Path(self.outputPath), trimap=Path(self.trimapPath), success=True)
