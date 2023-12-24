@@ -42,12 +42,13 @@ class Predictor(BasePredictor):
             # read mask from inputs
             maskMat = cv2.imread(str(mask))
 
-            kernel = np.ones((30, 30), np.uint8)
+            erosionKernel = np.ones((5, 5), np.uint8)
+            dilationKernel = np.ones((3, 3), np.uint8)
 
             # convert mask to greyscale, erode and dilate to create trimap
             maskImage = cv2.cvtColor(maskMat, cv2.COLOR_BGR2GRAY)
-            erodedImage = cv2.erode(maskImage, kernel, iterations=1)
-            dilatedImage = cv2.dilate(maskImage, kernel, iterations=1)
+            erodedImage = cv2.erode(maskImage, erosionKernel, iterations=1)
+            dilatedImage = cv2.dilate(maskImage, dilationKernel, iterations=1)
 
             # base for the trimap
             newImage = np.zeros((erodedImage.shape[0], erodedImage.shape[1]), np.uint8)
