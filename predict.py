@@ -20,11 +20,11 @@ class Output(BaseModel):
     error: Optional[str]
     segmented_image_pyMatting: Optional[Path]
     trimap: Optional[Path]
-    segmented_image_vit_matte: Optional[Path] = Field(default=False)
-    segmented_image_modified_matte: Optional[Path] = Field(default=False)
+    segmented_image_vit_matte: Optional[Path] = Field(default="")
+    segmented_image_modified_matte: Optional[Path] = Field(default="")
     embedding_check: Optional[bool] = Field(default=False)
-    embedding_check_failure_reason: Optional[str] = Field(default=False)
-    vit_and_modifier_algo_success: Optional[bool]
+    embedding_check_failure_reason: Optional[str] = Field(default="")
+    vit_and_modifier_algo_success: Optional[str] = Field(default="")
 
 
 class Predictor(BasePredictor):
