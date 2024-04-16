@@ -18,7 +18,7 @@ def generate_inference_from_one_image(model, input_image, dir_to_save=None):
             model: the trained model
             image: the input image
             trimap: the input trimap
-        """
+    """
     output = model(input_image)['phas'].flatten(0, 2)
     output = F.to_pil_image(output)
     output.save(opj(dir_to_save))

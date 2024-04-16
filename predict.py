@@ -114,7 +114,7 @@ class Predictor(BasePredictor):
             # cut the image using the trimap
 
             trimap = cv2.imread(str(trimap))
-            cv2.imwrite(self.trimap_pathpath, trimap)
+            cv2.imwrite(self.trimap_path, trimap)
 
             # cutout the image using pymatting
             cutout(self.image_path, self.trimap_path, self.output_path)
