@@ -48,6 +48,7 @@ class Predictor(BasePredictor):
             trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
         # if there's no mask/trimap, return an error
+        global output_from_vit_model, output_from_modifier_model, embedding_check_success, error_log, error_from_vit
         if mask is None and trimap is None:
             return Output(segmentedImage=None, success=False, error="Must provide either mask or trimap")
 
