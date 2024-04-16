@@ -11,13 +11,7 @@ from cog import BasePredictor, Input, Path
 from prediction_using_vit_and_skin_cut import SkinSegmentVitMatte
 import sys
 import os
-import gdown
-import os
 
-url = 'https://drive.google.com/u/0/uc?id=12VKhSwE_miF9lWQQCgK7mv83rJIls3Xe'
-file_name = './checkpoints/ViTMatte_S_Com.pth'
-os.makedirs(os.path.dirname(file_name), exist_ok=True)
-gdown.download(url, file_name)
 sys.path.append(os.path.abspath('./ViTMatte'))
 
 
