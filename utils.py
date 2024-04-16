@@ -110,7 +110,7 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
 
 
 def detect_face_and_hsv_from_images(image):
-    input_image = cv2.imread(image)
+    input_image = image
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + HAR_CASCADES_PATH)
     gray_scale_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
     try:
