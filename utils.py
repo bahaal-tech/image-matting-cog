@@ -110,7 +110,7 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
 
 
 def detect_face_and_hsv_from_images(image):
-    input_image = image
+    input_image = cv2.imread(str(image))
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + HAR_CASCADES_PATH)
     gray_scale_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
     try:
@@ -142,7 +142,7 @@ def selective_search_and_remove_skin_tone(input_image, matte_image, threshold_fo
     s_value = hsv_values["s_value"]
     v_value = hsv_values["v_value"]
 
-    image_matte = cv2.imread(matte_image)
+    image_matte = cv2.imread(str(matte_image))
     hsv_of_matte = cv2.cvtColor(image_matte, cv2.COLOR_BGR2HSV)
     target_hsv = np.array([h_value, s_value, v_value])
 
