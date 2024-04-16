@@ -35,7 +35,7 @@ class SkinSegmentVitMatte:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"]}
-        if distance_between_modified_and_vit_matte["cosine_distance"] > EMBEDDING_THRESHOLD:
+        if distance_between_modified_and_vit_matte["cosine_distance"][0] > EMBEDDING_THRESHOLD:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
                     "modified_matte_path": "", "embedding_check_label": True, "error_reason": ""}
         else:
