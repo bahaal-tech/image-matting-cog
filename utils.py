@@ -194,7 +194,8 @@ def calculate_embeddings_diff_between_two_images(modified_matting_image, vit_mat
     modified_image_embedding = get_image_embeddings(model, modified_matting_image)
     vit_matte_image_embedding = get_image_embeddings(model, vit_matted_image)
     if modified_image_embedding["success"] and vit_matte_image_embedding["success"]:
-        cosine_distance = calculate_cosine_distance(modified_image_embedding, vit_matte_image_embedding)
+        cosine_distance = calculate_cosine_distance(modified_image_embedding["embeddings"],
+                                                    vit_matte_image_embedding["embeddings"])
         if not cosine_distance["success"]:
             return {"success": False, "error": f"Similarity check failed due to :{cosine_distance['error']}"}
         return {"success": True, "cosine_distance": cosine_distance}
