@@ -25,6 +25,7 @@ class Output(BaseModel):
     embedding_check: Optional[bool] = Field(default=False)
     embedding_check_failure_reason: Optional[str] = Field(default="")
     vit_and_modifier_algo_success: Optional[str] = Field(default="")
+    embedding_distance: Optional[str] = Field(default="")
 
 
 class Predictor(BasePredictor):
@@ -48,7 +49,7 @@ class Predictor(BasePredictor):
             trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
         # if there's no mask/trimap, return an error
-        global output_from_vit_model, output_from_modifier_model, embedding_check_success, error_log, error_from_vit
+        global output_from_vit_model, output_from_modifier_model, embedding_check_success, error_log, error_from_vit, distance
         if mask is None and trimap is None:
             return Output(segmentedImage=None, success=False, error="Must provide either mask or trimap")
 
@@ -95,6 +96,7 @@ class Predictor(BasePredictor):
                 embedding_check_success = vit_matte_and_skin_cut_matte["embedding_check_label"]
                 error_log = vit_matte_and_skin_cut_matte["error_reason"]
                 error_from_vit = ""
+                distance = vit_matte_and_skin_cut_matte["distance"]
             else:
                 error_from_vit = vit_matte_and_skin_cut_matte["error"]
 
@@ -120,4 +122,6 @@ class Predictor(BasePredictor):
                       embedding_check=embedding_check_success,
                       embedding_check_failure_reason=error_log,
                       vit_and_modifier_algo_success=error_from_vit,
-                      success=True)
+                      success=True,
+                      embedding_distance=distance)
+
