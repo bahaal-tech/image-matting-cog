@@ -5,3 +5,10 @@ requirements.txt
 __pycache__
 images
 *.log
+ViTMatte
+checkpoints
+vit-matte-results
+input.jpg
+mask.png
+trimap.png
+.idea
