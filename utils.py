@@ -152,10 +152,10 @@ def selective_search_and_remove_skin_tone(input_image, matte_image, threshold_fo
                           target_hsv[2] + threshold_for_hsv])
 
     mask = cv2.inRange(hsv_of_matte, lower_hsv, upper_hsv)
-    inverse_mask = cv2.bitwise_not(mask)
-    skin_mask = cv2.bitwise_not(inverse_mask)
+    inverse_mask = cv2.bitwise_not(mask)  # Invert the mask
     result = np.copy(image_matte)
-    result[skin_mask == 0] = [255, 255, 255]
+    result[inverse_mask == 0] = [255, 255, 255]  # Keep the non-masked area
+
     if not os.path.exists(directory_to_save):
         os.mkdir(directory_to_save)
     output_dir_for_modified_matte = os.path.join(directory_to_save, 'modified_cutout.png')
