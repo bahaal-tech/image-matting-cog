@@ -23,11 +23,13 @@ class SkinSegmentVitMatte:
                                                                                       DIRECTORY_TO_SAVE_VIT_MATTE)
         if not cutout_image_from_vit_matting["success"]:
             return {"success": False, "error": f"Vit matting failed due to: {cutout_image_from_vit_matting}"}
+            
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                cutout_image_from_vit_matting["vit_matte_output"],
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
         if not modified_matte["success"]:
-            return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}"}
+            return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
+                    "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"]}
 
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
             modified_matte["output"], cutout_image_from_vit_matting["vit_matte_output"], self.embedding_model)

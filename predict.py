@@ -49,7 +49,6 @@ class Predictor(BasePredictor):
             trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
         # if there's no mask/trimap, return an error
-        global output_from_vit_model, output_from_modifier_model, embedding_check_success, error_log, error_from_vit, distance
         if mask is None and trimap is None:
             return Output(segmentedImage=None, success=False, error="Must provide either mask or trimap")
 
@@ -90,6 +89,10 @@ class Predictor(BasePredictor):
             cv2.imwrite("trimap.png", new_image)
             vit_matte_and_skin_cut_matte = SkinSegmentVitMatte().generate_modified_matted_results(image,
                                                                                                   self.trimap_path)
+            cutout(self.image_path, self.trimap_path, self.output_path)
+
+            output = cv2.imread(self.output_path)
+            cv2.imwrite("output.png", output)
             if vit_matte_and_skin_cut_matte["success"]:
                 output_from_vit_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
                 output_from_modifier_model = vit_matte_and_skin_cut_matte["modified_matte_path"]
@@ -98,13 +101,22 @@ class Predictor(BasePredictor):
                 error_from_vit = ""
                 distance = vit_matte_and_skin_cut_matte["distance"]
             else:
+                output_from_vit_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                output_from_modifier_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                embedding_check_success = False
+                error_log = ""
+                distance = ""
                 error_from_vit = vit_matte_and_skin_cut_matte["error"]
 
             # cutout the image using pymatting
-            cutout(self.image_path, self.trimap_path, self.output_path)
-
-            output = cv2.imread(self.output_path)
-            cv2.imwrite("output.png", output)
+            return Output(segmented_image_pyMatting=Path(self.output_path), trimap=Path(self.trimap_path),
+                          segmented_image_vit_matte=Path(output_from_vit_model),
+                          segmented_image_modified_matte=Path(output_from_modifier_model),
+                          embedding_check=embedding_check_success,
+                          embedding_check_failure_reason=error_log,
+                          vit_and_modifier_algo_success=error_from_vit,
+                          success=True,
+                          embedding_distance=distance)
 
         else:
             # if execution reaches here, trimap must be present, thus,
@@ -116,12 +128,13 @@ class Predictor(BasePredictor):
             # cutout the image using pymatting
             cutout(self.image_path, self.trimap_path, self.output_path)
 
-        return Output(segmented_image_pyMatting=Path(self.output_path), trimap=Path(self.trimap_path),
-                      segmented_image_vit_matte=Path(output_from_vit_model),
-                      segmented_image_modified_matte=Path(output_from_modifier_model),
-                      embedding_check=embedding_check_success,
-                      embedding_check_failure_reason=error_log,
-                      vit_and_modifier_algo_success=error_from_vit,
-                      success=True,
-                      embedding_distance=distance)
+            return Output(segmented_image_pyMatting=Path(self.output_path), trimap=Path(self.trimap_path),
+                          segmented_image_vit_matte=Path(self.output_path),
+                          segmented_image_modified_matte=Path(self.output_path),
+                          embedding_check=False,
+                          embedding_check_failure_reason="",
+                          vit_and_modifier_algo_success=False,
+                          success=True,
+                          embedding_distance="")
+
 
