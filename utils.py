@@ -82,7 +82,7 @@ def calculate_foreground(input_image, alpha_matte, output_path):
         None
     """
     image = Image.open(input_image).convert('RGB')
-    alpha = Image.open(alpha_matte).convert('L')
+    alpha = Image.open(alpha_matte)
 
     alpha = F.to_tensor(alpha).unsqueeze(0)
     image = F.to_tensor(image).unsqueeze(0)
