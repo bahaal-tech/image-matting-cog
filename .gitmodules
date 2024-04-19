@@ -1,0 +1,3 @@
+[submodule "ViTMatte"]
+	path = ViTMatte
+	url = https://github.com/hustvl/ViTMatte

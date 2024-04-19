@@ -1,11 +1,9 @@
 env/*
-requirements.txt
 .cog
 *.png
 __pycache__
 images
 *.log
-ViTMatte
 checkpoints
 vit-matte-results
 input.jpg
