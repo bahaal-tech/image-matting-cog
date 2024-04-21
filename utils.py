@@ -101,10 +101,8 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
             os.mkdir(directory_to_save)
         save_dir_for_matte = os.path.join(directory_to_save, 'matte.png')
         generate_inference_from_one_image(model, input_to_vit_model, save_dir_for_matte)
-        dir_for_cutout = os.path.join(directory_to_save, 'cutout.png')
-        calculate_foreground(input_image, save_dir_for_matte, dir_for_cutout)
-        os.remove(save_dir_for_matte)
-        return {"success": True, "vit_matte_output": dir_for_cutout}
+        convert_greyscale_image_to_transparent(save_dir_for_matte, save_dir_for_matte)
+        return {"success": True, "vit_matte_output": save_dir_for_matte}
     except Exception as e:
         return {"success": False, "error": f"Vit Matte model failed due : {e}"}
 
@@ -202,3 +200,27 @@ def calculate_embeddings_diff_between_two_images(modified_matting_image, vit_mat
     else:
         return {"success": False, "error": f"Similarity check failed due to {modified_image_embedding} "
                                            f"{vit_matte_image_embedding}"}
+
+def convert_greyscale_image_to_transparent(input_image_path, output_path):
+    """
+    Converts a greyscale image to a transparent one. Makes
+    absolute black pixels transparent, absolute white opaque
+    and grey ones to intermediate alpha values.
+    Input:
+        input_image_path: Path on disk for input greyscale image
+        output_path: The path where transparent image needs to be written
+    """
+    input_image = cv2.imread(input_image_path)
+
+    alpha_image = np.zeros(input_image.shape)
+
+    alpha_channel = cv2.cvtColor(input_image, cv2.COLOR_BGRA2GRAY)
+
+    color_channel = np.where(alpha_channel > 0, 255, 0)
+
+    alpha_image[:, :, 0] = color_channel
+    alpha_image[:, :, 1] = color_channel
+    alpha_image[:, :, 2] = color_channel
+    alpha_image[:, :, 3] = alpha_channel
+
+    cv2.imwrite(output_path, alpha_image)
