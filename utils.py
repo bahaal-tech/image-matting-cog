@@ -215,9 +215,11 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
     """
     input_image = cv2.imread(input_image_path)
 
-    alpha_image = np.zeros(input_image.shape)
+    (image_height, image_width, _) = input_image.shape
 
-    alpha_channel = cv2.cvtColor(input_image, cv2.COLOR_BGRA2GRAY)
+    alpha_image = np.zeros([image_height, image_width, 4])
+
+    alpha_channel = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
 
     color_channel = np.where(alpha_channel > 0, 255, 0)
 

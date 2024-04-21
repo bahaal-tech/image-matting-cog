@@ -89,6 +89,7 @@ class Predictor(BasePredictor):
             cv2.imwrite("trimap.png", new_image)
             vit_matte_and_skin_cut_matte = SkinSegmentVitMatte().generate_modified_matted_results(image,
                                                                                                   self.trimap_path)
+            print("vit matte and skin cut matte is ", vit_matte_and_skin_cut_matte)
             cutout(self.image_path, self.trimap_path, self.output_path)
 
             output = cv2.imread(self.output_path)

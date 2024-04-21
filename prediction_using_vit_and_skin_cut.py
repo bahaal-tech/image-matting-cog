@@ -27,6 +27,9 @@ class SkinSegmentVitMatte:
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                cutout_image_from_vit_matting["vit_matte_output"],
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
+
+        print("cutout image from vit matting is ", cutout_image_from_vit_matting)
+
         if not modified_matte["success"]:
             return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
                     "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"]}
