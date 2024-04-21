@@ -101,10 +101,8 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
             os.mkdir(directory_to_save)
         save_dir_for_matte = os.path.join(directory_to_save, 'matte.png')
         generate_inference_from_one_image(model, input_to_vit_model, save_dir_for_matte)
-        dir_for_cutout = os.path.join(directory_to_save, 'cutout.png')
-        calculate_foreground(input_image, save_dir_for_matte, dir_for_cutout)
         dir_for_alpha_output = os.path.join(directory_to_save, 'alpha.png')
-        convert_greyscale_image_to_transparent(dir_for_cutout, dir_for_alpha_output)
+        convert_greyscale_image_to_transparent(save_dir_for_matte, dir_for_alpha_output)
         return {"success": True, "vit_matte_output": dir_for_alpha_output}
     except Exception as e:
         return {"success": False, "error": f"Vit Matte model failed due : {e}"}
@@ -213,7 +211,7 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
         input_image_path: Path on disk for input greyscale image
         output_path: The path where transparent image needs to be written
     """
-    input_image = cv2.imread(input_image_path)
+    input_image = cv2.cvtColor(cv2.imread(input_image_path), cv2.COLOR_RGB2RGBA)
 
     (image_height, image_width, _) = input_image.shape
 
