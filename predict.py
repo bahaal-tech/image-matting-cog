@@ -11,7 +11,7 @@ from cog import BasePredictor, Input, Path
 class Output(BaseModel):
     success: bool
     error: Optional[str]
-    segmentedImage: Optional[Path]
+    segmented_image_pyMatting: Optional[Path]
     trimap: Optional[Path]
 
 class Predictor(BasePredictor):
@@ -84,4 +84,4 @@ class Predictor(BasePredictor):
             # cutout the image using pymatting
             cutout(self.imagePath, self.trimapPath, self.outputPath)
 
-        return Output(segmentedImage=Path(self.outputPath), trimap=Path(self.trimapPath), success=True)
+        return Output(segmented_image_pyMatting=Path(self.outputPath), trimap=Path(self.trimapPath), success=True)
