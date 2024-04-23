@@ -5,28 +5,48 @@ import cv2
 import numpy as np
 from typing import Optional
 from pymatting import cutout
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from cog import BasePredictor, Input, Path
+
+from prediction_using_vit_and_skin_cut import SkinSegmentVitMatte
+import sys
+import os
+
+sys.path.append(os.path.abspath('./ViTMatte'))
+
 
 class Output(BaseModel):
     success: bool
     error: Optional[str]
     segmented_image_pyMatting: Optional[Path]
     trimap: Optional[Path]
+    segmented_image_vit_matte: Optional[Path] = Field(default="")
+    segmented_image_modified_matte: Optional[Path] = Field(default="")
+    embedding_check: Optional[bool] = Field(default=False)
+    embedding_check_failure_reason: Optional[str] = Field(default="")
+    vit_and_modifier_algo_success: Optional[str] = Field(default="")
+    embedding_distance: Optional[str] = Field(default="")
+
 
 class Predictor(BasePredictor):
+    def __init__(self):
+        self.output_path = None
+        self.trimap_path = None
+        self.mask_path = None
+        self.image_path = None
+
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
-        self.imagePath = "/tmp/image.jpg"
-        self.maskPath = "/tmp/mask.png"
-        self.trimapPath = "/tmp/trimap.png"
-        self.outputPath = "/tmp/output.png"
+        self.image_path = "/tmp/image.jpg"
+        self.mask_path = "/tmp/mask.png"
+        self.trimap_path = "/tmp/trimap.png"
+        self.output_path = "/tmp/output.png"
 
     def predict(
-        self,
-        image: Path = Input(description="Input image"),
-        mask: Path = Input(description="Mask image", default=None),
-        trimap: Path = Input(description="Trimap image", default=None),
+            self,
+            image: Path = Input(description="Input image"),
+            mask: Path = Input(description="Mask image", default=None),
+            trimap: Path = Input(description="Trimap image", default=None),
     ) -> Output:
         # if there's no mask/trimap, return an error
         if mask is None and trimap is None:
@@ -36,52 +56,84 @@ class Predictor(BasePredictor):
         if mask is not None:
 
             # read save image from inputs to disk
-            imageMat = cv2.imread(str(image))
-            cv2.imwrite(self.imagePath, imageMat)
-            
-            # read mask from inputs
-            maskMat = cv2.imread(str(mask))
+            image_mat = cv2.imread(str(image))
+            cv2.imwrite(self.image_path, image_mat)
 
-            erosionKernel = np.ones((5, 5), np.uint8)
-            dilationKernel = np.ones((3, 3), np.uint8)
+            # read mask from inputs
+            mask_mat = cv2.imread(str(mask))
+
+            erosion_kernel = np.ones((5, 5), np.uint8)
+            dilation_kernel = np.ones((3, 3), np.uint8)
 
             # convert mask to greyscale, erode and dilate to create trimap
-            maskImage = cv2.cvtColor(maskMat, cv2.COLOR_BGR2GRAY)
-            erodedImage = cv2.erode(maskImage, erosionKernel, iterations=1)
-            dilatedImage = cv2.dilate(maskImage, dilationKernel, iterations=1)
+            mask_image = cv2.cvtColor(mask_mat, cv2.COLOR_BGR2GRAY)
+            eroded_image = cv2.erode(mask_image, erosion_kernel, iterations=1)
+            dilated_image = cv2.dilate(mask_image, dilation_kernel, iterations=1)
 
             # base for the trimap
-            newImage = np.zeros((erodedImage.shape[0], erodedImage.shape[1]), np.uint8)
+            new_image = np.zeros((eroded_image.shape[0], eroded_image.shape[1]), np.uint8)
 
-            for i in range(0, erodedImage.shape[0]):
-                for j in range(0, erodedImage.shape[1]):
-                    erosionPixel = erodedImage[i][j]
-                    dilationPixel = dilatedImage[i][j]
+            for i in range(0, eroded_image.shape[0]):
+                for j in range(0, eroded_image.shape[1]):
+                    erosion_pixel = eroded_image[i][j]
+                    dilation_pixel = dilated_image[i][j]
 
-                    if erosionPixel > 0:
-                        newImage[i][j] = 255
-                    elif dilationPixel > 0:
-                        newImage[i][j] = 127
-            
-            cv2.imwrite(self.trimapPath, newImage)
-            
+                    if erosion_pixel > 0:
+                        new_image[i][j] = 255
+                    elif dilation_pixel > 0:
+                        new_image[i][j] = 127
+
+            cv2.imwrite(self.trimap_path, new_image)
+
             # write trimap to disk for debugging
-            cv2.imwrite("trimap.png", newImage)
+            cv2.imwrite("trimap.png", new_image)
+            vit_matte_and_skin_cut_matte = SkinSegmentVitMatte().generate_modified_matted_results(image,
+                                                                                                  self.trimap_path)
+            print("vit matte and skin cut matte is ", vit_matte_and_skin_cut_matte)
+            cutout(self.image_path, self.trimap_path, self.output_path)
+
+            output = cv2.imread(self.output_path)
+            cv2.imwrite("output.png", output)
+            if vit_matte_and_skin_cut_matte["success"]:
+                output_from_vit_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                output_from_modifier_model = vit_matte_and_skin_cut_matte["modified_matte_path"]
+                embedding_check_success = vit_matte_and_skin_cut_matte["embedding_check_label"]
+                error_log = vit_matte_and_skin_cut_matte["error_reason"]
+                error_from_vit = ""
+                distance = vit_matte_and_skin_cut_matte["distance"]
+            else:
+                output_from_vit_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                output_from_modifier_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                embedding_check_success = False
+                error_log = ""
+                distance = ""
+                error_from_vit = vit_matte_and_skin_cut_matte["error"]
 
             # cutout the image using pymatting
-            cutout(self.imagePath, self.trimapPath, self.outputPath)
+            return Output(segmented_image_pyMatting=Path(self.output_path), trimap=Path(self.trimap_path),
+                          segmented_image_vit_matte=Path(output_from_vit_model),
+                          segmented_image_modified_matte=Path(output_from_modifier_model),
+                          embedding_check=embedding_check_success,
+                          embedding_check_failure_reason=error_log,
+                          vit_and_modifier_algo_success=error_from_vit,
+                          success=True,
+                          embedding_distance=distance)
 
-            output = cv2.imread(self.outputPath)
-            cv2.imwrite("output.png", output)
-        
         else:
             # if execution reaches here, trimap must be present, thus,
             # cut the image using the trimap
 
             trimap = cv2.imread(str(trimap))
-            cv2.imwrite(self.trimapPath, trimap)
+            cv2.imwrite(self.trimap_path, trimap)
 
             # cutout the image using pymatting
-            cutout(self.imagePath, self.trimapPath, self.outputPath)
+            cutout(self.image_path, self.trimap_path, self.output_path)
 
-        return Output(segmented_image_pyMatting=Path(self.outputPath), trimap=Path(self.trimapPath), success=True)
+            return Output(segmented_image_pyMatting=Path(self.output_path), trimap=Path(self.trimap_path),
+                          segmented_image_vit_matte=Path(self.output_path),
+                          segmented_image_modified_matte=Path(self.output_path),
+                          embedding_check=False,
+                          embedding_check_failure_reason="",
+                          vit_and_modifier_algo_success=False,
+                          success=True,
+                          embedding_distance="")

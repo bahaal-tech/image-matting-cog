@@ -1,7 +1,12 @@
 env/*
-requirements.txt
 .cog
 *.png
 __pycache__
 images
 *.log
+checkpoints
+vit-matte-results
+input.jpg
+mask.png
+trimap.png
+.idea
