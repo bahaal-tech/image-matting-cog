@@ -137,5 +137,3 @@ class Predictor(BasePredictor):
                           vit_and_modifier_algo_success=False,
                           success=True,
                           embedding_distance="")
-
-
