@@ -228,6 +228,7 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
     try:
+        Path(output_path).mkdir(exist_ok=True)
         vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
         if vit_matte is None:
             return {"success": False, "error": "Failed to read the matte image"}
