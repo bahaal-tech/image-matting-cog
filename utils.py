@@ -3,6 +3,7 @@ import cv2
 import torch
 import numpy as np
 from PIL import Image
+from pathlib import Path
 from os.path import join as opj
 from torchvision.transforms import functional as F
 from detectron2.config import LazyConfig, instantiate
@@ -227,6 +228,7 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
     try:
+        Path(output_path).mkdir(exist_ok=True)
         vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
         alpha_channel = vit_matte[:, :, 3]
         _, mask = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
