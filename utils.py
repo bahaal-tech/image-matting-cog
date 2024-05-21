@@ -228,18 +228,26 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
     try:
-        Path(output_path).mkdir(exist_ok=True)
         vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
+        if vit_matte is None:
+            return {"success": False, "error": "Failed to read the matte image"}
+        
         alpha_channel = vit_matte[:, :, 3]
         _, mask = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        edge_less_matte_path = os.path.join(output_path, 'edge_less.png')
+        
         if contours:
             x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
             cropped_alpha_matte = vit_matte[y:y + h, x:x + w]
-            cv2.imwrite(edge_less_matte_path, cropped_alpha_matte)
+            new_matte = np.zeros_like(vit_matte)
+            center_x = (vit_matte.shape[1] - w) // 2
+            center_y = (vit_matte.shape[0] - h) // 2
+            new_matte[center_y:center_y + h, center_x:center_x + w] = cropped_alpha_matte
+
+            edge_less_matte_path = os.path.join(output_path, 'edge_less.png')
+            cv2.imwrite(edge_less_matte_path, new_matte)
             return {"success": True, "path": edge_less_matte_path}
         else:
-            return {"success": False, "error": f"No eligible edges found to remove"}
+            return {"success": False, "error": "No eligible edges found to remove"}
     except Exception as e:
-        return {"success": False, "error": f"Edge removal failed due to :{e}"}
+        return {"success": False, "error": f"Edge removal failed due to: {e}"}
