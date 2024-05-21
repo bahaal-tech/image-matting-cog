@@ -29,7 +29,7 @@ class SkinSegmentVitMatte:
                                                                DIRECTORY_TO_SAVE_EDGE_LESS_MATTE)
         if not edge_less_matte["success"]:
             edge_less_matte_path = cutout_image_from_vit_matting["vit_matte_output"]
-            print(f"{edge_less_matte_path["error"]}")
+            print(f"{edge_less_matte_path['error']}")
         else:
             edge_less_matte_path = edge_less_matte["path"]
         modified_matte = selective_search_and_remove_skin_tone(input_image,
