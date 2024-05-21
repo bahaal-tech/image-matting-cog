@@ -3,6 +3,7 @@ import cv2
 import torch
 import numpy as np
 from PIL import Image
+from pathlib import Path
 from os.path import join as opj
 from torchvision.transforms import functional as F
 from detectron2.config import LazyConfig, instantiate
@@ -167,7 +168,7 @@ def get_image_embeddings(model, image_path):
     preprocess_input_image = transforms.Compose([
         transforms.Resize(MATRIX_TRANSFORM),
         transforms.ToTensor(),
-        transforms.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD),])
+        transforms.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD), ])
     try:
         image = Image.open(image_path)
         img = preprocess_input_image(image).unsqueeze(0)
@@ -202,6 +203,7 @@ def calculate_embeddings_diff_between_two_images(modified_matting_image, vit_mat
         return {"success": False, "error": f"Similarity check failed due to {modified_image_embedding} "
                                            f"{vit_matte_image_embedding}"}
 
+
 def convert_greyscale_image_to_transparent(input_image_path, output_path):
     """
     Converts a greyscale image to a transparent one. Makes
@@ -212,18 +214,43 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
         output_path: The path where transparent image needs to be written
     """
     input_image = cv2.cvtColor(cv2.imread(input_image_path), cv2.COLOR_RGB2RGBA)
-
     (image_height, image_width, _) = input_image.shape
-
     alpha_image = np.zeros([image_height, image_width, 4])
-
     alpha_channel = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
-
     color_channel = np.where(alpha_channel > 0, 255, 0)
 
     alpha_image[:, :, 0] = color_channel
     alpha_image[:, :, 1] = color_channel
     alpha_image[:, :, 2] = color_channel
     alpha_image[:, :, 3] = alpha_channel
-
     cv2.imwrite(output_path, alpha_image)
+
+
+def extra_edge_removal_from_matte_output(matte_image, output_path):
+    try:
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
+        if vit_matte is None:
+            return {"success": False, "error": "Failed to read the matte image"}
+        
+        alpha_channel = vit_matte[:, :, 3]
+        _, mask = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if contours:
+            x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
+            cropped_alpha_matte = vit_matte[y:y + h, x:x + w]
+            
+            # Create a new matte image with the same dimensions as the original
+            new_matte = np.zeros_like(vit_matte)
+            
+            # Place the cropped matte image back into its original position
+            new_matte[y:y + h, x:x + w] = cropped_alpha_matte
+
+            edge_less_matte_path = os.path.join(output_path, 'edge_less.png')
+            cv2.imwrite(edge_less_matte_path, new_matte)
+            return {"success": True, "path": edge_less_matte_path}
+        else:
+            return {"success": False, "error": "No eligible edges found to remove"}
+    except Exception as e:
+        return {"success": False, "error": f"Edge removal failed due to: {e}"}

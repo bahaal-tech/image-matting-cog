@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 from constants import VIT_MATTE_MODEL_NAME, THRESHOLD, DIRECTORY_TO_SAVE_VIT_MATTE, \
-    DIRECTORY_TO_SAVE_MODIFIED_MATTE, EMBEDDING_THRESHOLD, MODEL_DIR
+    DIRECTORY_TO_SAVE_MODIFIED_MATTE, EMBEDDING_THRESHOLD, MODEL_DIR, DIRECTORY_TO_SAVE_EDGE_LESS_MATTE
 from utils import model_initializer, alpha_matte_inference_from_vision_transformer, \
-    selective_search_and_remove_skin_tone, calculate_embeddings_diff_between_two_images
+    selective_search_and_remove_skin_tone, calculate_embeddings_diff_between_two_images, \
+    extra_edge_removal_from_matte_output
 import torchvision.models as models
 
 
@@ -23,29 +24,36 @@ class SkinSegmentVitMatte:
                                                                                       DIRECTORY_TO_SAVE_VIT_MATTE)
         if not cutout_image_from_vit_matting["success"]:
             return {"success": False, "error": f"Vit matting failed due to: {cutout_image_from_vit_matting}"}
-            
+
+        edge_less_matte = extra_edge_removal_from_matte_output(cutout_image_from_vit_matting["vit_matte_output"],
+                                                               DIRECTORY_TO_SAVE_EDGE_LESS_MATTE)
+        if not edge_less_matte["success"]:
+            edge_less_matte_path = cutout_image_from_vit_matting["vit_matte_output"]
+            print(f"{edge_less_matte_path['error']}")
+        else:
+            edge_less_matte_path = edge_less_matte["path"]
         modified_matte = selective_search_and_remove_skin_tone(input_image,
-                                                               cutout_image_from_vit_matting["vit_matte_output"],
+                                                               edge_less_matte_path,
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
 
         print("cutout image from vit matting is ", cutout_image_from_vit_matting)
 
         if not modified_matte["success"]:
             return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
-                    "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"]}
+                    "vit_matte_path": edge_less_matte_path}
 
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
-            modified_matte["output"], cutout_image_from_vit_matting["vit_matte_output"], self.embedding_model)
+            modified_matte["output"], edge_less_matte_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
-            return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+            return {"success": True, "vit_matte_path": edge_less_matte_path,
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"], "distance": ""}
         if distance_between_modified_and_vit_matte["cosine_distance"]["similarity"] > EMBEDDING_THRESHOLD:
-            return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+            return {"success": True, "vit_matte_path": edge_less_matte_path,
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]}
         else:
-            return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+            return {"success": True, "vit_matte_path": edge_less_matte_path,
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]
                     }

@@ -24,6 +24,7 @@ THRESHOLD = 60
 DIRECTORY_TO_SAVE_VIT_MATTE = "./vit-matte-results"
 MODEL_DIR = "./checkpoints/ViTMatte_S_Com.pth"
 DIRECTORY_TO_SAVE_MODIFIED_MATTE = "./modified_matte"
+DIRECTORY_TO_SAVE_EDGE_LESS_MATTE = "./edgeless_matte"
 
 # EMBEDDING MODEL
 EMBEDDING_MODEL_NAME = "imagenet"
