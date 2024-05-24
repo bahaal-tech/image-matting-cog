@@ -91,8 +91,9 @@ def calculate_foreground(input_image, alpha_matte, output_path):
     foreground = image * alpha
     foreground = foreground.squeeze(0).permute(1, 2, 0).numpy()
 
-    foreground = (foreground * 255).astype(np.uint8)
-    cv2.imwrite(output_path, cv2.cvtColor(foreground, cv2.COLOR_RGBA2BGRA))
+    # foreground = (foreground * 255).astype(np.uint8)
+    # cv2.imwrite(output_path, cv2.cvtColor(foreground, cv2.COLOR_RGBA2BGRA))
+    cv2.imwrite(output_path, foreground)
 
 
 def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_image, directory_to_save):
