@@ -11,6 +11,7 @@ build:
     - "git clone https://github.com/hustvl/ViTMatte.git"
     - "python -m pip install git+https://github.com/facebookresearch/detectron2.git"
     - "pip install gdown"
+    - "pip install rembg"
     - "mkdir -p ./checkpoints"
 
 predict: "predict.py:Predictor"
