@@ -103,8 +103,10 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
         save_dir_for_matte = os.path.join(directory_to_save, 'matte.png')
         generate_inference_from_one_image(model, input_to_vit_model, save_dir_for_matte)
         dir_for_alpha_output = os.path.join(directory_to_save, 'alpha.png')
+        dir_for_cutout_output = os.path.join(directory_to_save, 'cutout.png')
+        calculate_foreground(input_image, dir_for_alpha_output, dir_for_cutout_output)
         convert_greyscale_image_to_transparent(save_dir_for_matte, dir_for_alpha_output)
-        return {"success": True, "vit_matte_output": dir_for_alpha_output}
+        return {"success": True, "vit_matte_output": dir_for_alpha_output, "cutout_output": dir_for_cutout_output}
     except Exception as e:
         return {"success": False, "error": f"Vit Matte model failed due : {e}"}
 
