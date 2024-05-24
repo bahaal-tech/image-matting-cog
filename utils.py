@@ -226,18 +226,15 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
-    from rembg import remove
-    from PIL import Image
+    import subprocess
     try:
         output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
-        # output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
-        # os.system(f"rembg i {matte_image} {output_path_for_non_mask_edge_less_image}")
-        # os.system(f"rembg i -om {matte_image} {output_path_for_mask_edge_less_image}")
-        input_image = Image.open(matte_image)
-        output = remove(input_image)
-        output.save(output_path_for_non_mask_edge_less_image)
-        return {"success": True, "mask_edge_less_path": output_path_for_non_mask_edge_less_image,
-                "non_mask_edge_less_path":
+        output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
+        subprocess.run(['rembg', 'i', matte_image, output_path_for_non_mask_edge_less_image],
+                       capture_output=True, text=True)
+        subprocess.run(['rembg', 'i', '-om', matte_image, output_path_for_mask_edge_less_image],
+                       capture_output=True, text=True)
+        return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
                 output_path_for_non_mask_edge_less_image}
     except Exception as e:
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
