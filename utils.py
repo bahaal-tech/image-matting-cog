@@ -83,16 +83,13 @@ def calculate_foreground(input_image, alpha_matte, output_path):
         None
     """
     image = Image.open(input_image).convert('RGB')
-    alpha = Image.open(alpha_matte)
-
+    alpha = Image.open(alpha_matte).convert('L')
     alpha = F.to_tensor(alpha).unsqueeze(0)
     image = F.to_tensor(image).unsqueeze(0)
-
-    foreground = image * alpha
+    foreground = image * alpha + (1 - alpha)
     foreground = foreground.squeeze(0).permute(1, 2, 0).numpy()
-
-    foreground = (foreground * 255).astype(np.uint8)
-    cv2.imwrite(output_path, cv2.cvtColor(foreground, cv2.COLOR_RGB2BGR))
+    image_cutout = (foreground * 255).astype(np.uint8)
+    cv2.imwrite(output_path, image_cutout)
 
 
 def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_image, directory_to_save):
