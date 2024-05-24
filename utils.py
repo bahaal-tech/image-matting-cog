@@ -227,26 +227,11 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
     try:
-        Path(output_path).mkdir(parents=True, exist_ok=True)
-        vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
-        if vit_matte is None:
-            return {"success": False, "error": "Failed to read the matte image"}
-        if vit_matte.shape[2] != 4:
-            return {"success": False, "error": "Image does not have an alpha channel"}
-        alpha_channel = vit_matte[:, :, 3]
-        _, mask = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if contours:
-            largest_contour = max(contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(largest_contour)
-            cropped_alpha_matte = vit_matte[y:y + h, x:x + w]
-            new_matte = np.zeros_like(vit_matte)
-            new_matte[y:y + h, x:x + w] = cropped_alpha_matte
-            edge_less_matte_path = os.path.join(output_path, 'edge_less.png')
-            cv2.imwrite(edge_less_matte_path, new_matte)
-            return {"success": True, "path": edge_less_matte_path}
-        else:
-            return {"success": False, "error": "No eligible edges found to remove"}
+        output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
+        output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
+        os.system(f"rembg i {matte_image} {output_path_for_non_mask_edge_less_image}")
+        os.system(f"rembg i -om {matte_image} {output_path_for_mask_edge_less_image}")
+        return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
+                output_path_for_non_mask_edge_less_image}
     except Exception as e:
-        return {"success": False, "error": f"Edge removal failed due to: {e}"}
-
+        return {"success": False, "error": f"Edge removal failed due to :{e}"}
