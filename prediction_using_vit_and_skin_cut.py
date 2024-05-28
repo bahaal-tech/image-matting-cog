@@ -33,9 +33,9 @@ class SkinSegmentVitMatte:
             print(f"{edge_less_matte['error']}")
         else:
             dir_for_edge_less_alpha_output = os.path.join(DIRECTORY_TO_SAVE_EDGE_LESS_MATTE, 'edge_less_alpha.png')
-            convert_greyscale_image_to_transparent(edge_less_matte["mask_edge_less_path"],
-                                                   dir_for_edge_less_alpha_output)
-            edge_less_matte_mask_path = dir_for_edge_less_alpha_output
+            # convert_greyscale_image_to_transparent(edge_less_matte["mask_edge_less_path"],
+            #                                        dir_for_edge_less_alpha_output)
+            edge_less_matte_mask_path = edge_less_matte["mask_edge_less_path"]
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                edge_less_matte_mask_path,
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
