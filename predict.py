@@ -102,8 +102,8 @@ class Predictor(BasePredictor):
                 error_from_vit = ""
                 distance = vit_matte_and_skin_cut_matte["distance"]
             else:
-                output_from_vit_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
-                output_from_modifier_model = vit_matte_and_skin_cut_matte["vit_matte_path"]
+                output_from_vit_model = vit_matte_and_skin_cut_matte["error"]
+                output_from_modifier_model = vit_matte_and_skin_cut_matte["error"]
                 embedding_check_success = False
                 error_log = ""
                 distance = ""
