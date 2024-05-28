@@ -82,6 +82,7 @@ def calculate_foreground(input_image, alpha_matte, output_path):
     Output:
         None
     """
+    Path(output_path).mkdir(exist_ok=True)
     image = Image.open(input_image).convert('RGB')
     alpha = Image.open(alpha_matte).convert('L')
     alpha = F.to_tensor(alpha).unsqueeze(0)
@@ -94,15 +95,21 @@ def calculate_foreground(input_image, alpha_matte, output_path):
 
 def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_image, directory_to_save):
     try:
+        print("**************************************\n\n")
         input_to_vit_model = generate_model_input(input_image, trimap_image)
+        print("input to vit model is ", input_to_vit_model)
         if not os.path.exists(directory_to_save):
             os.mkdir(directory_to_save)
         save_dir_for_matte = os.path.join(directory_to_save, 'matte.png')
+        print("save dir for matte is ", save_dir_for_matte)
         generate_inference_from_one_image(model, input_to_vit_model, save_dir_for_matte)
         dir_for_alpha_output = os.path.join(directory_to_save, 'alpha.png')
+        print("dir for alpha output is ", dir_for_alpha_output)
         dir_for_cutout_output = os.path.join(directory_to_save, 'cutout.png')
+        print("dir for cutout output is ", dir_for_cutout_output)
         calculate_foreground(input_image, dir_for_alpha_output, dir_for_cutout_output)
         convert_greyscale_image_to_transparent(save_dir_for_matte, dir_for_alpha_output)
+        print("\n\n***************************************")
         return {"success": True, "vit_matte_output": dir_for_alpha_output, "cutout_output": dir_for_cutout_output}
     except Exception as e:
         return {"success": False, "error": f"Vit Matte model failed due : {e}"}
@@ -212,6 +219,7 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
         input_image_path: Path on disk for input greyscale image
         output_path: The path where transparent image needs to be written
     """
+    Path(output_path).mkdir(exist_ok=True)
     input_image = cv2.cvtColor(cv2.imread(input_image_path), cv2.COLOR_RGB2RGBA)
     (image_height, image_width, _) = input_image.shape
     alpha_image = np.zeros([image_height, image_width, 4])
