@@ -253,6 +253,8 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
                 )
                 ou.write(output_no_mask)
         no_mask_path = os.path.join("edge_less_no_mask.png")
+        print(mask_path)
+        print(no_mask_path)
         return {"success": True, "mask_edge_less_path": mask_path, "non_mask_edge_less_path": no_mask_path}
     except Exception as e:
         return {"success": False, "error": f"Edge removal failed due to :{e}"}

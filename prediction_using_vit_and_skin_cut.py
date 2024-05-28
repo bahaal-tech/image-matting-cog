@@ -36,6 +36,7 @@ class SkinSegmentVitMatte:
             # convert_greyscale_image_to_transparent(edge_less_matte["mask_edge_less_path"],
             #                                        dir_for_edge_less_alpha_output)
             edge_less_matte_mask_path = edge_less_matte["mask_edge_less_path"]
+        print(edge_less_matte_mask_path)
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                edge_less_matte_mask_path,
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
