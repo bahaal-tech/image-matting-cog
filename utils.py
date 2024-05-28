@@ -226,23 +226,33 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
-    import subprocess
+    from rembg import new_session, remove
     try:
         output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
         output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
-        result_non_mask = subprocess.run(['rembg', 'i', '-m', 'u2net', matte_image,
-                                          output_path_for_non_mask_edge_less_image], capture_output=True, text=True)
-        result_mask = subprocess.run(['rembg', 'i', '-om', '-m', 'u2net', matte_image,
-                                      output_path_for_mask_edge_less_image], capture_output=True, text=True)
-        print('stdout:', result_non_mask.stdout)
-        print('stderr:', result_non_mask.stderr)
-        print('returncode:', result_non_mask.returncode)
-
-        print('stdout:', result_mask.stdout)
-        print('stderr:', result_mask.stderr)
-        print('returncode:', result_mask.returncode)
-
-        return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
-                output_path_for_non_mask_edge_less_image}
+        image = cv2.imread(matte_image, cv2.IMREAD_COLOR)
+        new_image = os.path.join(output_path, "input.png")
+        cv2.imwrite(new_image, image)
+        with open(new_image, 'rb') as i:
+            with open(output_path_for_mask_edge_less_image, 'wb') as o:
+                input_image = i.read()
+                output = remove(
+                    input_image,
+                    session=new_session("u2net"),
+                    only_mask=True
+                )
+                o.write(output)
+        mask_path = os.path.join("edge_less_mask.png")
+        with open(new_image, 'rb') as f:
+            with open(output_path_for_non_mask_edge_less_image, 'wb') as ou:
+                input_image_no_mask = f.read()
+                output_no_mask = remove(
+                    input_image_no_mask,
+                    session=new_session("u2net"),
+                    only_mask=False
+                )
+                ou.write(output_no_mask)
+        no_mask_path = os.path.join("edge_less_no_mask.png")
+        return {"success": True, "mask_edge_less_path": mask_path, "non_mask_edge_less_path": no_mask_path}
     except Exception as e:
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
