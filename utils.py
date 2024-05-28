@@ -231,30 +231,19 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
         output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
         image = cv2.imread(matte_image, cv2.IMREAD_COLOR)
-        new_image = os.path.join(output_path, "input.png")
-        cv2.imwrite(new_image, image)
-        with open(new_image, 'rb') as i:
-            with open(output_path_for_mask_edge_less_image, 'wb') as o:
-                input_image = i.read()
-                output = remove(
-                    input_image,
-                    session=new_session("u2net"),
-                    only_mask=True
-                )
-                o.write(output)
-        mask_path = os.path.join("edge_less_mask.png")
-        with open(new_image, 'rb') as f:
-            with open(output_path_for_non_mask_edge_less_image, 'wb') as ou:
-                input_image_no_mask = f.read()
-                output_no_mask = remove(
-                    input_image_no_mask,
-                    session=new_session("u2net"),
-                    only_mask=False
-                )
-                ou.write(output_no_mask)
-        no_mask_path = os.path.join("edge_less_no_mask.png")
-        print(mask_path)
-        print(no_mask_path)
-        return {"success": True, "mask_edge_less_path": mask_path, "non_mask_edge_less_path": no_mask_path}
+        output = remove(
+            image,
+            session=new_session("u2net"),
+            only_mask=True
+        )
+        cv2.imwrite(output_path_for_mask_edge_less_image, output)
+        output_no_mask = remove(
+            image,
+            session=new_session("u2net"),
+            only_mask=False
+        )
+        cv2.imwrite(output_path_for_non_mask_edge_less_image, output_no_mask)
+        return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
+            output_path_for_non_mask_edge_less_image}
     except Exception as e:
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
