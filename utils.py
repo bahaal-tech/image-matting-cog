@@ -234,13 +234,6 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
                                           output_path_for_non_mask_edge_less_image], capture_output=True, text=True)
         result_mask = subprocess.run(['rembg', 'i', '-om', '-m', 'u2net', matte_image,
                                       output_path_for_mask_edge_less_image], capture_output=True, text=True)
-        print('stdout:', result_non_mask.stdout)
-        print('stderr:', result_non_mask.stderr)
-        print('returncode:', result_non_mask.returncode)
-
-        print('stdout:', result_mask.stdout)
-        print('stderr:', result_mask.stderr)
-        print('returncode:', result_mask.returncode)
 
         return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
                 output_path_for_non_mask_edge_less_image}
