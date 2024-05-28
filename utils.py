@@ -82,7 +82,6 @@ def calculate_foreground(input_image, alpha_matte, output_path):
     Output:
         None
     """
-    Path(output_path).mkdir(exist_ok=True)
     image = Image.open(input_image).convert('RGB')
     alpha = Image.open(alpha_matte).convert('L')
     alpha = F.to_tensor(alpha).unsqueeze(0)
@@ -213,7 +212,6 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
         input_image_path: Path on disk for input greyscale image
         output_path: The path where transparent image needs to be written
     """
-    Path(output_path).mkdir(exist_ok=True)
     input_image = cv2.cvtColor(cv2.imread(input_image_path), cv2.COLOR_RGB2RGBA)
     (image_height, image_width, _) = input_image.shape
     alpha_image = np.zeros([image_height, image_width, 4])
@@ -232,9 +230,9 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
     try:
         output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
         output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
-        subprocess.run(['rembg', 'i', matte_image, output_path_for_non_mask_edge_less_image],
+        subprocess.run(['rembg', 'i', '-m', 'u2net', matte_image, output_path_for_non_mask_edge_less_image],
                        capture_output=True, text=True)
-        subprocess.run(['rembg', 'i', '-om', matte_image, output_path_for_mask_edge_less_image],
+        subprocess.run(['rembg', 'i', '-om', '-m', 'u2net', matte_image, output_path_for_mask_edge_less_image],
                        capture_output=True, text=True)
         return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
                 output_path_for_non_mask_edge_less_image}
