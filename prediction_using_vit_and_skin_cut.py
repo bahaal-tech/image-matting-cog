@@ -51,14 +51,17 @@ class SkinSegmentVitMatte:
             modified_matte["output"], edge_less_matte_mask_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
             return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
+                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"], "distance": ""}
         if distance_between_modified_and_vit_matte["cosine_distance"]["similarity"] > EMBEDDING_THRESHOLD:
             return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
+                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]}
         else:
             return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
+                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
                     "modified_matte_path": modified_matte["output"], "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]
                     }
