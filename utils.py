@@ -235,8 +235,9 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
             image,
             alpha_matting=True,
             alpha_matting_foreground_threshold=270,
-            alpha_matting_background_threshold=20,
-            alpha_matting_erode_size=11,
+            alpha_matting_background_threshold=-10,
+            alpha_matting_erode_size=-10,
+            epsilon=1e-5,
             session=new_session("u2net"),
             only_mask=True
         )
@@ -245,8 +246,9 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
             image,
             alpha_matting=True,
             alpha_matting_foreground_threshold=270,
-            alpha_matting_background_threshold=20,
-            alpha_matting_erode_size=11,
+            alpha_matting_background_threshold=-10,
+            alpha_matting_erode_size=-10,
+            epsilon=1e-5,
             session=new_session("u2net"),
             only_mask=False
         )
