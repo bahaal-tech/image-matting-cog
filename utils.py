@@ -233,12 +233,20 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         image = cv2.imread(matte_image, cv2.IMREAD_COLOR)
         output = remove(
             image,
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=270,
+            alpha_matting_background_threshold=20,
+            alpha_matting_erode_size=11,
             session=new_session("u2net"),
             only_mask=True
         )
         cv2.imwrite(output_path_for_mask_edge_less_image, output)
         output_no_mask = remove(
             image,
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=270,
+            alpha_matting_background_threshold=20,
+            alpha_matting_erode_size=11,
             session=new_session("u2net"),
             only_mask=False
         )
