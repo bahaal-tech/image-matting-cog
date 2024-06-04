@@ -1,5 +1,6 @@
 import torch
 import os
+import cv2
 import torch.nn as nn
 from constants import VIT_MATTE_MODEL_NAME, THRESHOLD, DIRECTORY_TO_SAVE_VIT_MATTE, \
     DIRECTORY_TO_SAVE_MODIFIED_MATTE, EMBEDDING_THRESHOLD, MODEL_DIR, DIRECTORY_TO_SAVE_EDGE_LESS_MATTE
@@ -38,7 +39,7 @@ class SkinSegmentVitMatte:
             edge_less_matte_mask_path = dir_for_edge_less_alpha_output
         print(edge_less_matte_mask_path)
         modified_matte = selective_search_and_remove_skin_tone(input_image,
-                                                               edge_less_matte_mask_path,
+                                                               cutout_image_from_vit_matting["vit_matte_output"],
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
 
         print("cutout image from vit matting is ", cutout_image_from_vit_matting)
@@ -46,22 +47,24 @@ class SkinSegmentVitMatte:
         if not modified_matte["success"]:
             return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
                     "vit_matte_path": edge_less_matte_mask_path}
-
+        modified_matte_image = cv2.imread(modified_matte["output"])
+        kernel_for_modified_matte = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
+        final_image = cv2.morphologyEx(modified_matte_image, cv2.MORPH_OPEN, kernel_for_modified_matte, iterations=4)
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
             modified_matte["output"], edge_less_matte_mask_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
-            return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
-                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
-                    "modified_matte_path": edge_less_matte_mask_path, "embedding_check_label": False, "error_reason":
+            return {"success": True, "vit_matte_path": final_image,
+                    "edge_less_no_mask": final_image,
+                    "modified_matte_path": final_image, "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"], "distance": ""}
         if distance_between_modified_and_vit_matte["cosine_distance"]["similarity"] > EMBEDDING_THRESHOLD:
-            return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
-                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
-                    "modified_matte_path": edge_less_matte_mask_path, "embedding_check_label": True, "error_reason": "",
+            return {"success": True, "vit_matte_path": final_image,
+                    "edge_less_no_mask": final_image,
+                    "modified_matte_path": final_image, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]}
         else:
-            return {"success": True, "vit_matte_path": edge_less_matte_mask_path,
-                    "edge_less_no_mask": edge_less_matte["non_mask_edge_less_path"],
-                    "modified_matte_path": edge_less_matte_mask_path, "embedding_check_label": True, "error_reason": "",
+            return {"success": True, "vit_matte_path": final_image,
+                    "edge_less_no_mask": final_image,
+                    "modified_matte_path": final_image, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]
                     }
