@@ -45,7 +45,7 @@ class SkinSegmentVitMatte:
         grey_scale_final_path = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "edge_less_final_matte.png")
         convert_greyscale_image_to_transparent(dir_final, grey_scale_final_path)
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
-            modified_matte["output"], grey_scale_final_path, self.embedding_model)
+            modified_matte_path_need_to_be_passed, grey_scale_final_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
                     "edge_less_no_mask": grey_scale_final_path,
