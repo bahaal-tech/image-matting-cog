@@ -50,21 +50,23 @@ class SkinSegmentVitMatte:
         modified_matte_image = cv2.imread(modified_matte["output"])
         kernel_for_modified_matte = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
         final_image = cv2.morphologyEx(modified_matte_image, cv2.MORPH_OPEN, kernel_for_modified_matte, iterations=4)
+        dir_final = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "final_matte_image.png")
+        cv2.imwrite(dir_final, final_image)
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
             modified_matte["output"], edge_less_matte_mask_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
-            return {"success": True, "vit_matte_path": final_image,
-                    "edge_less_no_mask": final_image,
-                    "modified_matte_path": final_image, "embedding_check_label": False, "error_reason":
+            return {"success": True, "vit_matte_path": dir_final,
+                    "edge_less_no_mask": dir_final,
+                    "modified_matte_path": dir_final, "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"], "distance": ""}
         if distance_between_modified_and_vit_matte["cosine_distance"]["similarity"] > EMBEDDING_THRESHOLD:
-            return {"success": True, "vit_matte_path": final_image,
-                    "edge_less_no_mask": final_image,
-                    "modified_matte_path": final_image, "embedding_check_label": True, "error_reason": "",
+            return {"success": True, "vit_matte_path": dir_final,
+                    "edge_less_no_mask": dir_final,
+                    "modified_matte_path": dir_final, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]}
         else:
-            return {"success": True, "vit_matte_path": final_image,
-                    "edge_less_no_mask": final_image,
-                    "modified_matte_path": final_image, "embedding_check_label": True, "error_reason": "",
+            return {"success": True, "vit_matte_path": dir_final,
+                    "edge_less_no_mask": dir_final,
+                    "modified_matte_path": dir_final, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]
                     }
