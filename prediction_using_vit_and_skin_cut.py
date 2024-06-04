@@ -27,17 +27,6 @@ class SkinSegmentVitMatte:
         if not cutout_image_from_vit_matting["success"]:
             return {"success": False, "error": f"Vit matting failed due to: {cutout_image_from_vit_matting}"}
 
-        edge_less_matte = extra_edge_removal_from_matte_output(cutout_image_from_vit_matting["cutout_output"],
-                                                               DIRECTORY_TO_SAVE_EDGE_LESS_MATTE)
-        if not edge_less_matte["success"]:
-            edge_less_matte_mask_path = cutout_image_from_vit_matting["vit_matte_output"]
-            print(f"{edge_less_matte['error']}")
-        else:
-            dir_for_edge_less_alpha_output = os.path.join(DIRECTORY_TO_SAVE_EDGE_LESS_MATTE, 'edge_less_alpha.png')
-            convert_greyscale_image_to_transparent(edge_less_matte["mask_edge_less_path"],
-                                                   dir_for_edge_less_alpha_output)
-            edge_less_matte_mask_path = dir_for_edge_less_alpha_output
-        print(edge_less_matte_mask_path)
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                cutout_image_from_vit_matting["vit_matte_output"],
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
@@ -45,9 +34,10 @@ class SkinSegmentVitMatte:
         print("cutout image from vit matting is ", cutout_image_from_vit_matting)
 
         if not modified_matte["success"]:
-            return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
-                    "vit_matte_path": edge_less_matte_mask_path}
-        modified_matte_image = cv2.imread(modified_matte["output"])
+            modified_matte_path_need_to_be_passed = cutout_image_from_vit_matting["vit_matte_output"]
+        else:
+            modified_matte_path_need_to_be_passed = modified_matte["output"]
+        modified_matte_image = cv2.imread(modified_matte_path_need_to_be_passed)
         kernel_for_modified_matte = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         final_image = cv2.morphologyEx(modified_matte_image, cv2.MORPH_OPEN, kernel_for_modified_matte, iterations=3)
         dir_final = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "final_matte_image.png")
@@ -55,7 +45,7 @@ class SkinSegmentVitMatte:
         grey_scale_final_path = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "edge_less_final_matte.png")
         convert_greyscale_image_to_transparent(dir_final, grey_scale_final_path)
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
-            modified_matte["output"], edge_less_matte_mask_path, self.embedding_model)
+            modified_matte["output"], grey_scale_final_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
                     "edge_less_no_mask": grey_scale_final_path,
