@@ -45,9 +45,10 @@ class SkinSegmentVitMatte:
         print("cutout image from vit matting is ", cutout_image_from_vit_matting)
 
         if not modified_matte["success"]:
-            return {"success": False, "error": f"matting modifications failed due to:{modified_matte['error']}",
-                    "vit_matte_path": edge_less_matte_mask_path}
-        modified_matte_image = cv2.imread(modified_matte["output"])
+            modified_matte_path_need_to_be_passed = cutout_image_from_vit_matting["vit_matte_output"]
+        else:
+            modified_matte_path_need_to_be_passed = modified_matte["output"]
+        modified_matte_image = cv2.imread(modified_matte_path_need_to_be_passed)
         kernel_for_modified_matte = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         final_image = cv2.morphologyEx(modified_matte_image, cv2.MORPH_OPEN, kernel_for_modified_matte, iterations=3)
         dir_final = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "final_matte_image.png")
