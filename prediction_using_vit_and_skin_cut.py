@@ -27,17 +27,6 @@ class SkinSegmentVitMatte:
         if not cutout_image_from_vit_matting["success"]:
             return {"success": False, "error": f"Vit matting failed due to: {cutout_image_from_vit_matting}"}
 
-        edge_less_matte = extra_edge_removal_from_matte_output(cutout_image_from_vit_matting["cutout_output"],
-                                                               DIRECTORY_TO_SAVE_EDGE_LESS_MATTE)
-        if not edge_less_matte["success"]:
-            edge_less_matte_mask_path = cutout_image_from_vit_matting["vit_matte_output"]
-            print(f"{edge_less_matte['error']}")
-        else:
-            dir_for_edge_less_alpha_output = os.path.join(DIRECTORY_TO_SAVE_EDGE_LESS_MATTE, 'edge_less_alpha.png')
-            convert_greyscale_image_to_transparent(edge_less_matte["mask_edge_less_path"],
-                                                   dir_for_edge_less_alpha_output)
-            edge_less_matte_mask_path = dir_for_edge_less_alpha_output
-        print(edge_less_matte_mask_path)
         modified_matte = selective_search_and_remove_skin_tone(input_image,
                                                                cutout_image_from_vit_matting["vit_matte_output"],
                                                                THRESHOLD, DIRECTORY_TO_SAVE_MODIFIED_MATTE)
@@ -56,7 +45,7 @@ class SkinSegmentVitMatte:
         grey_scale_final_path = os.path.join(DIRECTORY_TO_SAVE_MODIFIED_MATTE, "edge_less_final_matte.png")
         convert_greyscale_image_to_transparent(dir_final, grey_scale_final_path)
         distance_between_modified_and_vit_matte = calculate_embeddings_diff_between_two_images(
-            modified_matte["output"], edge_less_matte_mask_path, self.embedding_model)
+            modified_matte["output"], grey_scale_final_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
                     "edge_less_no_mask": grey_scale_final_path,
