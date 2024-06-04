@@ -1,5 +1,5 @@
 build:
-  gpu: false
+  gpu: true
   system_packages:
     - "libgl1"
     - "libglib2.0-0"
@@ -10,7 +10,6 @@ build:
   run:
     - "git clone https://github.com/hustvl/ViTMatte.git"
     - "python -m pip install git+https://github.com/facebookresearch/detectron2.git"
-    - "pip install gdown"
     - "mkdir -p ./checkpoints"
 
 predict: "predict.py:Predictor"

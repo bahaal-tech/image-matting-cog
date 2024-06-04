@@ -83,16 +83,13 @@ def calculate_foreground(input_image, alpha_matte, output_path):
         None
     """
     image = Image.open(input_image).convert('RGB')
-    alpha = Image.open(alpha_matte)
-
+    alpha = Image.open(alpha_matte).convert('L')
     alpha = F.to_tensor(alpha).unsqueeze(0)
     image = F.to_tensor(image).unsqueeze(0)
-
-    foreground = image * alpha
+    foreground = image * alpha + (1 - alpha)
     foreground = foreground.squeeze(0).permute(1, 2, 0).numpy()
-
-    foreground = (foreground * 255).astype(np.uint8)
-    cv2.imwrite(output_path, cv2.cvtColor(foreground, cv2.COLOR_RGBA2BGRA))
+    image_cutout = (foreground * 255).astype(np.uint8)
+    cv2.imwrite(output_path, image_cutout)
 
 
 def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_image, directory_to_save):
@@ -103,8 +100,10 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
         save_dir_for_matte = os.path.join(directory_to_save, 'matte.png')
         generate_inference_from_one_image(model, input_to_vit_model, save_dir_for_matte)
         dir_for_alpha_output = os.path.join(directory_to_save, 'alpha.png')
+        dir_for_cutout_output = os.path.join(directory_to_save, 'cutout.png')
         convert_greyscale_image_to_transparent(save_dir_for_matte, dir_for_alpha_output)
-        return {"success": True, "vit_matte_output": dir_for_alpha_output}
+        calculate_foreground(input_image, dir_for_alpha_output, dir_for_cutout_output)
+        return {"success": True, "vit_matte_output": dir_for_alpha_output, "cutout_output": dir_for_cutout_output}
     except Exception as e:
         return {"success": False, "error": f"Vit Matte model failed due : {e}"}
 
@@ -227,30 +226,34 @@ def convert_greyscale_image_to_transparent(input_image_path, output_path):
 
 
 def extra_edge_removal_from_matte_output(matte_image, output_path):
+    from rembg import new_session, remove
     try:
-        Path(output_path).mkdir(parents=True, exist_ok=True)
-        vit_matte = cv2.imread(matte_image, cv2.IMREAD_UNCHANGED)
-        if vit_matte is None:
-            return {"success": False, "error": "Failed to read the matte image"}
-        
-        alpha_channel = vit_matte[:, :, 3]
-        _, mask = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        if contours:
-            x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
-            cropped_alpha_matte = vit_matte[y:y + h, x:x + w]
-            
-            # Create a new matte image with the same dimensions as the original
-            new_matte = np.zeros_like(vit_matte)
-            
-            # Place the cropped matte image back into its original position
-            new_matte[y:y + h, x:x + w] = cropped_alpha_matte
-
-            edge_less_matte_path = os.path.join(output_path, 'edge_less.png')
-            cv2.imwrite(edge_less_matte_path, new_matte)
-            return {"success": True, "path": edge_less_matte_path}
-        else:
-            return {"success": False, "error": "No eligible edges found to remove"}
+        output_path_for_non_mask_edge_less_image = os.path.join(output_path, "edge_less_no_mask.png")
+        output_path_for_mask_edge_less_image = os.path.join(output_path, "edge_less_mask.png")
+        image = cv2.imread(matte_image, cv2.IMREAD_COLOR)
+        output = remove(
+            image,
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=270,
+            alpha_matting_background_threshold=-10,
+            alpha_matting_erode_size=-10,
+            epsilon=1e-5,
+            session=new_session("u2net"),
+            only_mask=True
+        )
+        cv2.imwrite(output_path_for_mask_edge_less_image, output)
+        output_no_mask = remove(
+            image,
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=270,
+            alpha_matting_background_threshold=-10,
+            alpha_matting_erode_size=-10,
+            epsilon=1e-5,
+            session=new_session("u2net"),
+            only_mask=False
+        )
+        cv2.imwrite(output_path_for_non_mask_edge_less_image, output_no_mask)
+        return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
+            output_path_for_non_mask_edge_less_image}
     except Exception as e:
-        return {"success": False, "error": f"Edge removal failed due to: {e}"}
+        return {"success": False, "error": f"Edge removal failed due to :{e}"}
