@@ -8,8 +8,6 @@ build:
   python_version: "3.8"
   python_requirements: requirements.txt
   run:
-    - "git clone https://github.com/hustvl/ViTMatte.git"
     - "python -m pip install git+https://github.com/facebookresearch/detectron2.git"
-    - "mkdir -p ./checkpoints"
 
 predict: "predict.py:Predictor"

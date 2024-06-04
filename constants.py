@@ -1,4 +1,8 @@
 # CV2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 HAR_CASCADES_PATH = "haarcascade_frontalface_default.xml"
 FACE_SCALE_FACTOR = 1.1
 MIN_NEIGHBOURS = 5
@@ -30,3 +34,6 @@ DIRECTORY_TO_SAVE_EDGE_LESS_MATTE = "./edgeless_matte"
 EMBEDDING_MODEL_NAME = "imagenet"
 POLLING_EMBEDDING = "avg"
 EMBEDDING_THRESHOLD = 0.70
+
+# SENTRY
+SENTRY_DSN = os.getenv("SENTRY_DSN")
