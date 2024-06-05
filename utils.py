@@ -254,6 +254,6 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         )
         cv2.imwrite(output_path_for_non_mask_edge_less_image, output_no_mask)
         return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
-            output_path_for_non_mask_edge_less_image}
+                output_path_for_non_mask_edge_less_image}
     except Exception as e:
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
