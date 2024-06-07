@@ -11,7 +11,16 @@ from detectron2.checkpoint import DetectionCheckpointer
 from constants import HAR_CASCADES_PATH, FACE_SCALE_FACTOR, MIN_NEIGHBOURS, MIN_SIZE, LOWER_SKIN_BOUNDARIES, \
     UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION, SENTRY_DSN
 
-sentry_sdk.init(dsn=SENTRY_DSN)
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 
 def generate_inference_from_one_image(model, input_image, dir_to_save=None):
