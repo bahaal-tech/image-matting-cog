@@ -1,15 +1,26 @@
 import os
 import cv2
 import torch
+import sentry_sdk
 import numpy as np
 from PIL import Image
-from pathlib import Path
 from os.path import join as opj
 from torchvision.transforms import functional as F
 from detectron2.config import LazyConfig, instantiate
 from detectron2.checkpoint import DetectionCheckpointer
 from constants import HAR_CASCADES_PATH, FACE_SCALE_FACTOR, MIN_NEIGHBOURS, MIN_SIZE, LOWER_SKIN_BOUNDARIES, \
-    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION
+    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION, SENTRY_DSN
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 
 def generate_inference_from_one_image(model, input_image, dir_to_save=None):
@@ -105,7 +116,9 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
         calculate_foreground(input_image, dir_for_alpha_output, dir_for_cutout_output)
         return {"success": True, "vit_matte_output": dir_for_alpha_output, "cutout_output": dir_for_cutout_output}
     except Exception as e:
-        return {"success": False, "error": f"Vit Matte model failed due : {e}"}
+        error_message = f"Vit Matte model failed due : {e}"
+        raise_sentry_error(e)
+        return {"success": False, "error": error_message}
 
 
 def detect_face_and_hsv_from_images(image):
@@ -129,6 +142,8 @@ def detect_face_and_hsv_from_images(image):
             h, s, v = skin_color_hsv[0][0]
             return {"success": True, "h_value": h, "s_value": s, "v_value": v}
     except Exception as e:
+        error_message = f"Face detection or hsv extraction failed due to :{e}"
+        raise_sentry_error(e)
         return {"success": False, "error": f"Face detection or hsv extraction failed due to :{e}"}
 
 
@@ -254,6 +269,12 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         )
         cv2.imwrite(output_path_for_non_mask_edge_less_image, output_no_mask)
         return {"success": True, "mask_edge_less_path": output_path_for_mask_edge_less_image, "non_mask_edge_less_path":
-            output_path_for_non_mask_edge_less_image}
+                output_path_for_non_mask_edge_less_image}
     except Exception as e:
+        error_message = f"Edge removal failed due to :{e}"
+        raise_sentry_error(e)
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
+
+
+def raise_sentry_error(error_message):
+    sentry_sdk.capture_exception(error_message)
