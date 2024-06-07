@@ -117,7 +117,7 @@ def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_ima
         return {"success": True, "vit_matte_output": dir_for_alpha_output, "cutout_output": dir_for_cutout_output}
     except Exception as e:
         error_message = f"Vit Matte model failed due : {e}"
-        raise_sentry_error(error_message)
+        raise_sentry_error(e)
         return {"success": False, "error": error_message}
 
 
@@ -143,7 +143,7 @@ def detect_face_and_hsv_from_images(image):
             return {"success": True, "h_value": h, "s_value": s, "v_value": v}
     except Exception as e:
         error_message = f"Face detection or hsv extraction failed due to :{e}"
-        raise_sentry_error(error_message)
+        raise_sentry_error(e)
         return {"success": False, "error": f"Face detection or hsv extraction failed due to :{e}"}
 
 
@@ -272,7 +272,7 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
                 output_path_for_non_mask_edge_less_image}
     except Exception as e:
         error_message = f"Edge removal failed due to :{e}"
-        raise_sentry_error(error_message)
+        raise_sentry_error(e)
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
 
 
