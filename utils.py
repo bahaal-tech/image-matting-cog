@@ -190,6 +190,7 @@ def get_image_embeddings(model, image_path):
             embedding = model(img)
         return {"success": True, "embeddings": embedding.squeeze().numpy()}
     except Exception as e:
+        raise_sentry_error(e)
         return {"success": False, "error": f"Image embedding creation failed due to {e}"}
 
 
@@ -201,6 +202,7 @@ def calculate_cosine_distance(modified_matting_image, vit_matted_image):
                                                            dim=SIMILARITY_DIMENSION)
         return {"success": True, "similarity": similarity.item()}
     except Exception as e:
+        raise_sentry_error(e)
         return {"success": False, "error": f"Calculation of cosine similarity failed due to{e}"}
 
 
