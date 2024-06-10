@@ -82,6 +82,7 @@ class Predictor(BasePredictor):
 
             cv2.imwrite(self.trimap_path, new_image)
             cv2.imwrite("trimap.png", new_image)
+            # write trimap to disk for debugging
             torch.cuda.empty_cache()
             vit_matte_and_skin_cut_matte = SkinSegmentVitMatte().generate_modified_matted_results(image,
                                                                                                   self.trimap_path)
