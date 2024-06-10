@@ -48,16 +48,25 @@ class SkinSegmentVitMatte:
             modified_matte_path_need_to_be_passed, grey_scale_final_path, self.embedding_model)
         if not distance_between_modified_and_vit_matte["success"]:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+                    "non_converted_final_mask": dir_final,
+                    "vit_matte_cutout_image": cutout_image_from_vit_matting["cutout_output"],
+                    "skin_cut_output": modified_matte_path_need_to_be_passed,
                     "edge_less_no_mask": grey_scale_final_path,
                     "modified_matte_path": grey_scale_final_path, "embedding_check_label": False, "error_reason":
                     distance_between_modified_and_vit_matte["error"], "distance": ""}
         if distance_between_modified_and_vit_matte["cosine_distance"]["similarity"] > EMBEDDING_THRESHOLD:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+                    "non_converted_final_mask": dir_final,
+                    "vit_matte_cutout_image": cutout_image_from_vit_matting["cutout_output"],
+                    "skin_cut_output": modified_matte_path_need_to_be_passed,
                     "edge_less_no_mask": grey_scale_final_path,
                     "modified_matte_path": grey_scale_final_path, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]}
         else:
             return {"success": True, "vit_matte_path": cutout_image_from_vit_matting["vit_matte_output"],
+                    "non_converted_final_mask": dir_final,
+                    "vit_matte_cutout_image": cutout_image_from_vit_matting["cutout_output"],
+                    "skin_cut_output": modified_matte_path_need_to_be_passed,
                     "edge_less_no_mask": grey_scale_final_path,
                     "modified_matte_path": grey_scale_final_path, "embedding_check_label": True, "error_reason": "",
                     "distance": distance_between_modified_and_vit_matte["cosine_distance"]["similarity"]
