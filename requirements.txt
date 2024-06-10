@@ -16,7 +16,6 @@ h11==0.14.0
 httptools==0.6.1
 idna==3.6
 llvmlite==0.41.1
-logging==0.4.9.6
 numba==0.58.1
 numpy==1.24.4
 opencv-python==4.8.1.78
