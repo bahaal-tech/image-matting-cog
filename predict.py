@@ -13,7 +13,9 @@ from prediction_using_vit_and_skin_cut import SkinSegmentVitMatte
 import sys
 import os
 from logger import get_system_usage
-
+import sentry_sdk
+from constants import SENTRY_DSN
+from sentry_sdk.integrations.serverless import serverless_function
 sys.path.append(os.path.abspath('./ViTMatte'))
 
 
@@ -45,6 +47,19 @@ class Predictor(BasePredictor):
         self.trimap_path = "/tmp/trimap.png"
         self.output_path = "/tmp/output.png"
 
+        # initialize sentry
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            # Set traces_sample_rate to 1.0 to capture 100%
+            # of transactions for performance monitoring.
+            traces_sample_rate=1.0,
+            # Set profiles_sample_rate to 1.0 to profile 100%
+            # of sampled transactions.
+            # We recommend adjusting this value in production.
+            profiles_sample_rate=1.0,
+        )
+
+    @serverless_function
     def predict(
             self,
             image: Path = Input(description="Input image"),
