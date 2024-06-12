@@ -9,20 +9,12 @@ from torchvision.transforms import functional as F
 from detectron2.config import LazyConfig, instantiate
 from detectron2.checkpoint import DetectionCheckpointer
 from constants import HAR_CASCADES_PATH, FACE_SCALE_FACTOR, MIN_NEIGHBOURS, MIN_SIZE, LOWER_SKIN_BOUNDARIES, \
-    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION, SENTRY_DSN
+    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION
 
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-)
+from sentry_sdk.integrations.serverless import serverless_function
 
 
+@serverless_function
 def generate_inference_from_one_image(model, input_image, dir_to_save=None):
     """
         Infer the alpha matte of one image.
@@ -37,6 +29,7 @@ def generate_inference_from_one_image(model, input_image, dir_to_save=None):
     return None
 
 
+@serverless_function
 def model_initializer(model, checkpoint, device):
     """
     Initialize the model.
@@ -65,6 +58,7 @@ def model_initializer(model, checkpoint, device):
     return model
 
 
+@serverless_function
 def generate_model_input(input_image, image_trimap):
     """
     Get the data of one image.
@@ -83,6 +77,7 @@ def generate_model_input(input_image, image_trimap):
     }
 
 
+@serverless_function
 def calculate_foreground(input_image, alpha_matte, output_path):
     """
     Calculate the foreground of the image.
@@ -147,6 +142,7 @@ def detect_face_and_hsv_from_images(image):
         return {"success": False, "error": f"Face detection or hsv extraction failed due to :{e}"}
 
 
+@serverless_function
 def selective_search_and_remove_skin_tone(input_image, matte_image, threshold_for_hsv, directory_to_save):
     hsv_values = detect_face_and_hsv_from_images(input_image)
     if not hsv_values["success"]:
@@ -190,6 +186,7 @@ def get_image_embeddings(model, image_path):
             embedding = model(img)
         return {"success": True, "embeddings": embedding.squeeze().numpy()}
     except Exception as e:
+        raise_sentry_error(e)
         return {"success": False, "error": f"Image embedding creation failed due to {e}"}
 
 
@@ -201,9 +198,11 @@ def calculate_cosine_distance(modified_matting_image, vit_matted_image):
                                                            dim=SIMILARITY_DIMENSION)
         return {"success": True, "similarity": similarity.item()}
     except Exception as e:
+        raise_sentry_error(e)
         return {"success": False, "error": f"Calculation of cosine similarity failed due to{e}"}
 
 
+@serverless_function
 def calculate_embeddings_diff_between_two_images(modified_matting_image, vit_matted_image, model):
     modified_image_embedding = get_image_embeddings(model, modified_matting_image)
     vit_matte_image_embedding = get_image_embeddings(model, vit_matted_image)
@@ -218,6 +217,7 @@ def calculate_embeddings_diff_between_two_images(modified_matting_image, vit_mat
                                            f"{vit_matte_image_embedding}"}
 
 
+@serverless_function
 def convert_greyscale_image_to_transparent(input_image_path, output_path):
     """
     Converts a greyscale image to a transparent one. Makes
