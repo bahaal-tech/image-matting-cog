@@ -1,7 +1,10 @@
 import os
+import random
+from PIL import Image
 import cv2
 import torch
 import sentry_sdk
+import wandb
 import numpy as np
 from PIL import Image
 from os.path import join as opj
@@ -275,6 +278,41 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         raise_sentry_error(e)
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
 
+def overlay_final_mask_in_black_background(image_path, mask_path, output_image_path):
+    """
+    This function is designed to create cutout of garment from the original image using
+    the alpha-matte mask and finally overlay it in black background. Idea is same like
+    adding white/grey background in frontend, here we are using black so that we can see
+    black lines.
+    :param image_path: Actual Image --> loaded as PIL array (RGBA)
+    :param mask_path: Alpha Matte (final one) --> loaded as PIL array (RGBA)
+    :param output_image_path: Saving path
+    :return: cutout image in black background --> Converted from PIL array with RGBA
+    """
+    try:
+        actual_image = Image.open(image_path).convert("RGBA")
+        mask_image = Image.open(mask_path).convert("RGBA")
+        mask_alpha = mask_image.split()[-1]
+        background_color = (0, 0, 0, 255)
+        segmented_image = Image.new("RGBA", actual_image.size, background_color)
+        actual_image_array = np.array(actual_image)
+        mask_alpha_array = np.array(mask_alpha)
+        for channel in range(3):
+            actual_image_array[:, :, channel] = actual_image_array[:, :, channel] * (mask_alpha_array / 255.0)
+        masked_image = Image.fromarray(actual_image_array, "RGBA")
+        segmented_image.paste(masked_image, (0, 0), mask_alpha)
+        segmented_image.save(output_image_path)
+        return {"success": True, "overlay_path": output_image_path}
+    except Exception as e:
+        return {"success": False, "error": f"Overlay failed due to {e}"}
+
 
 def raise_sentry_error(error_message):
     sentry_sdk.capture_exception(error_message)
+
+def initialize_wandb(product_id):
+    experiment_count = random.random()
+    wandb.init(project=f"{product_id}_matte_{experiment_count}", ntags=["Matting_Experiment"])
+
+def log_results_to_wandb(output_image_name, path_of_image):
+    wandb.log({f"{output_image_name}": wandb.Image(path_of_image)})
