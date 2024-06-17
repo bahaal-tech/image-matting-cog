@@ -279,6 +279,16 @@ def extra_edge_removal_from_matte_output(matte_image, output_path):
         return {"success": False, "error": f"Edge removal failed due to :{e}"}
 
 def overlay_final_mask_in_black_background(image_path, mask_path, output_image_path):
+    """
+    This function is designed to create cutout of garment from the original image using
+    the alpha-matte mask and finally overlay it in black background. Idea is same like
+    adding white/grey background in frontend, here we are using black so that we can see
+    black lines.
+    :param image_path: Actual Image --> loaded as PIL array (RGBA)
+    :param mask_path: Alpha Matte (final one) --> loaded as PIL array (RGBA)
+    :param output_image_path: Saving path
+    :return: cutout image in black background --> Converted from PIL array with RGBA
+    """
     try:
         actual_image = Image.open(image_path).convert("RGBA")
         mask_image = Image.open(mask_path).convert("RGBA")
