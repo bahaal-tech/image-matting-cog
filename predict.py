@@ -93,9 +93,9 @@ class Predictor(BasePredictor):
 
             # write trimap to disk for debugging
             cv2.imwrite("trimap.png", new_image)
-            log_results_to_wandb("Image", self.image_path)
-            log_results_to_wandb("Segmentation Mask", self.mask_path)
-            log_results_to_wandb("Trimap", self.trimap_path)
+            # log_results_to_wandb("Image", self.image_path)
+            # log_results_to_wandb("Segmentation Mask", self.mask_path)
+            # log_results_to_wandb("Trimap", self.trimap_path)
             vit_matte_and_skin_cut_matte = SkinSegmentVitMatte().generate_modified_matted_results(image,
                                                                                                   self.trimap_path)
             print("vit matte and skin cut matte is ", vit_matte_and_skin_cut_matte)
@@ -111,12 +111,12 @@ class Predictor(BasePredictor):
                 distance = vit_matte_and_skin_cut_matte["distance"]
                 edge_less_no_mask_path = vit_matte_and_skin_cut_matte["edge_less_no_mask"]
 
-                log_results_to_wandb("VIT Matte Alpha Output", output_from_vit_model)
-                log_results_to_wandb("VIT Matte cutout Output",
-                                     vit_matte_and_skin_cut_matte["vit_matte_cutout_image"])
-                log_results_to_wandb("Skin Cut Model Output",
-                                     vit_matte_and_skin_cut_matte["skin_cut_output"])
-                log_results_to_wandb("Final Modified Mask", output_from_modifier_model)
+                # log_results_to_wandb("VIT Matte Alpha Output", output_from_vit_model)
+                # log_results_to_wandb("VIT Matte cutout Output",
+                #                      vit_matte_and_skin_cut_matte["vit_matte_cutout_image"])
+                # log_results_to_wandb("Skin Cut Model Output",
+                #                      vit_matte_and_skin_cut_matte["skin_cut_output"])
+                # log_results_to_wandb("Final Modified Mask", output_from_modifier_model)
                 image_overlay_dir = os.path.join(DIRECTORY_TO_SAVE_IMAGE_OVERLAY, "overlay.png")
                 image_overlay = overlay_final_mask_in_black_background(self.image_path,
                                                                        vit_matte_and_skin_cut_matte["non_converted_final_mask"],
