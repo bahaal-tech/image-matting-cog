@@ -3,10 +3,11 @@ import os
 import cv2
 import torch.nn as nn
 from constants import VIT_MATTE_MODEL_NAME, THRESHOLD, DIRECTORY_TO_SAVE_VIT_MATTE, \
-    DIRECTORY_TO_SAVE_MODIFIED_MATTE, EMBEDDING_THRESHOLD, MODEL_DIR, DIRECTORY_TO_SAVE_EDGE_LESS_MATTE
+    DIRECTORY_TO_SAVE_MODIFIED_MATTE, EMBEDDING_THRESHOLD, MODEL_DIR, DIRECTORY_TO_SAVE_EDGE_LESS_MATTE, \
+    DIRECTORY_TO_SAVE_VIT_MATTE_HF
 from utils import model_initializer, alpha_matte_inference_from_vision_transformer, \
     selective_search_and_remove_skin_tone, calculate_embeddings_diff_between_two_images, \
-    extra_edge_removal_from_matte_output, convert_greyscale_image_to_transparent
+    extra_edge_removal_from_matte_output, convert_greyscale_image_to_transparent, vit_matte_hugging_face_inference
 import torchvision.models as models
 
 
@@ -21,9 +22,11 @@ class SkinSegmentVitMatte:
         self.embedding_model.eval()
 
     def generate_modified_matted_results(self, input_image, trimap_image):
-        cutout_image_from_vit_matting = alpha_matte_inference_from_vision_transformer(self.vit_matte_model, input_image,
-                                                                                      trimap_image,
-                                                                                      DIRECTORY_TO_SAVE_VIT_MATTE)
+        #cutout_image_from_vit_matting = alpha_matte_inference_from_vision_transformer(self.vit_matte_model, input_image,
+        #                                                                              trimap_image,
+        #                                                                              DIRECTORY_TO_SAVE_VIT_MATTE)
+        cutout_image_from_vit_matting = vit_matte_hugging_face_inference(input_image, trimap_image,
+                                                                         DIRECTORY_TO_SAVE_VIT_MATTE_HF)
         if not cutout_image_from_vit_matting["success"]:
             return {"success": False, "error": f"Vit matting failed due to: {cutout_image_from_vit_matting}"}
 

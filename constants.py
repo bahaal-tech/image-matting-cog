@@ -41,3 +41,7 @@ SENTRY_DSN = os.getenv("SENTRY_DSN")
 
 # WANDB
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+
+# VIT MATTE HF
+VIT_MATTE_HF_MODEL_NAME = "hustvl/vitmatte-small-composition-1k"
+DIRECTORY_TO_SAVE_VIT_MATTE_HF = "./vit_matte_hf"
