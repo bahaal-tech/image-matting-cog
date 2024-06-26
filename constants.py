@@ -26,7 +26,7 @@ THRESHOLD = 60
 
 # DIRECTORY
 DIRECTORY_TO_SAVE_VIT_MATTE = "./vit-matte-results"
-MODEL_DIR = "./checkpoints/ViTMatte_D_Com.pth"
+MODEL_DIR = "./checkpoints/ViTMatte_B_Com.pth"
 DIRECTORY_TO_SAVE_MODIFIED_MATTE = "./modified_matte"
 DIRECTORY_TO_SAVE_EDGE_LESS_MATTE = "./edgeless_matte"
 DIRECTORY_TO_SAVE_IMAGE_OVERLAY = "./image_overlay"
