@@ -312,7 +312,7 @@ def raise_sentry_error(error_message):
 
 def initialize_wandb(product_id):
     experiment_count = random.random()
-    wandb.init(project=f"{product_id}_matte_{experiment_count}", ntags=["Matting_Experiment"])
+    wandb.init(project=f"{product_id}_matte_{experiment_count}")
 
 def log_results_to_wandb(output_image_name, path_of_image):
     wandb.log({f"{output_image_name}": wandb.Image(path_of_image)})
