@@ -2,6 +2,7 @@ torch
 torchvision
 fairscale
 timm
+transformers==4.41.2
 anyio==4.2.0
 attrs==23.1.0
 certifi==2023.11.17

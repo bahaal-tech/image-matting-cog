@@ -1,18 +1,19 @@
 import os
 import random
 from PIL import Image
+import torch
 import cv2
 import torch
 import sentry_sdk
 import wandb
 import numpy as np
-from PIL import Image
 from os.path import join as opj
 from torchvision.transforms import functional as F
 from detectron2.config import LazyConfig, instantiate
 from detectron2.checkpoint import DetectionCheckpointer
 from constants import HAR_CASCADES_PATH, FACE_SCALE_FACTOR, MIN_NEIGHBOURS, MIN_SIZE, LOWER_SKIN_BOUNDARIES, \
-    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION, SENTRY_DSN
+    UPPER_SKIN_BOUNDARIES, MATRIX_TRANSFORM, NORMALIZE_MEAN, NORMALIZE_STD, SIMILARITY_DIMENSION, SENTRY_DSN, \
+    VIT_MATTE_HF_MODEL_NAME
 
 sentry_sdk.init(
     dsn=SENTRY_DSN,
@@ -104,6 +105,44 @@ def calculate_foreground(input_image, alpha_matte, output_path):
     foreground = foreground.squeeze(0).permute(1, 2, 0).numpy()
     image_cutout = (foreground * 255).astype(np.uint8)
     cv2.imwrite(output_path, image_cutout)
+
+def tensor2pil(t_image: torch.Tensor)  -> Image:
+  return Image.fromarray(np.clip(255.0 * t_image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+
+def RGB2RGBA(image, mask):
+  (R, G, B) = image.convert('RGB').split()
+  return Image.merge('RGBA', (R, G, B, mask.convert('L')))
+
+def vit_matte_hugging_face_inference(image_path, trimap_path, dir_for_vit_matte_hf_matte):
+    from PIL import Image
+    from transformers import VitMatteImageProcessor, VitMatteForImageMatting
+    if not os.path.exists(dir_for_vit_matte_hf_matte):
+        os.mkdir(dir_for_vit_matte_hf_matte)
+    pil_input_image = Image.open(image_path)
+    if pil_input_image.mode != 'RGB':
+        pil_input_image = pil_input_image.convert('RGB')
+    pil_trimap_image = Image.open(trimap_path)
+    if pil_trimap_image.mode != 'L':
+        pil_trimap_image = pil_trimap_image.convert('L')
+    try:
+        vit_matte_model = VitMatteForImageMatting.from_pretrained(VIT_MATTE_HF_MODEL_NAME, local_files_only=False)
+        vit_matte_processor = VitMatteImageProcessor.from_pretrained(VIT_MATTE_HF_MODEL_NAME, local_files_only=False)
+        vit_matte_model_processor = vit_matte_processor(images=pil_input_image, trimaps=pil_trimap_image,
+                                                  return_tensors="pt")
+        with torch.no_grad():
+            predictions = vit_matte_model(**vit_matte_model_processor).alphas
+        mask = tensor2pil(predictions).convert('L')
+        path_to_save_vit_matte_mask = os.path.join(dir_for_vit_matte_hf_matte, "vit_matte_hf.png")
+        mask.save(path_to_save_vit_matte_mask)
+        dir_for_alpha_matte = os.path.join(dir_for_vit_matte_hf_matte, "alpha.png")
+        convert_greyscale_image_to_transparent(path_to_save_vit_matte_mask, dir_for_alpha_matte)
+        dir_for_cutout_image = os.path.join(dir_for_vit_matte_hf_matte, "cutout.png")
+        cutout_image = RGB2RGBA(pil_input_image, mask)
+        cutout_image.save(dir_for_cutout_image)
+        return {"success": True, "vit_matte_output": dir_for_alpha_matte, "cutout_output": dir_for_cutout_image}
+    except Exception as e:
+        raise_sentry_error(e)
+        return {"success": False, "error": f"Problem in hugging face VIT Matte due to : {e}"}
 
 
 def alpha_matte_inference_from_vision_transformer(model, input_image, trimap_image, directory_to_save):
@@ -312,7 +351,7 @@ def raise_sentry_error(error_message):
 
 def initialize_wandb(product_id):
     experiment_count = random.random()
-    wandb.init(project=f"{product_id}_matte_{experiment_count}", ntags=["Matting_Experiment"])
+    wandb.init(project=f"{product_id}_matte_{experiment_count}")
 
 def log_results_to_wandb(output_image_name, path_of_image):
     wandb.log({f"{output_image_name}": wandb.Image(path_of_image)})
